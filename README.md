@@ -74,26 +74,26 @@ Automatic invocation of this script every time when you run ssh command. this ca
     open your ~/.ssh/ssh_config and setup a entry for your ssh server(s)
 
     *which looks like below entry but by replacing all 3 values below(ec2-user will be same ifyou are also using aws amazon linux. but if not, please update that also with the acutal user name that you login with).*
-```
-Host blogserver
-  User ec2-user
-  Hostname 43.85.51.239
-  IdentityFile ~/keys/blogserver.pem
-```
-open your ~/.bashrc and add below contents and use source command to reload
-```
-sshaws(){
-node ~/git/aws_scripts/modsgip.js
-ssh $1
-}
-source ~/.bashrc
-```
+    ```
+    Host blogserver
+      User ec2-user
+      Hostname 43.85.51.239
+      IdentityFile ~/keys/blogserver.pem
+    ```
+    open your ~/.bashrc and add below contents and use source command to reload
+    ```
+    sshaws(){
+    node ~/git/aws_scripts/modsgip.js
+    ssh $1
+    }
+    source ~/.bashrc
+    ```
   - ###### Execution:
-  use the previously defined macro instead of regular ssh command
-```
-sshaws blogserver
-```
-or like below when you dont have a entry for this server in your ~/.ssh/ssh_config file
-```
-sshaws -i ~/keys/blogserver.pem 43.21.17.31
-```
+    use the previously defined macro instead of regular ssh command
+    ```
+    sshaws blogserver
+    ```
+    or like below when you dont have a entry for this server in your ~/.ssh/ssh_config file
+    ```
+    sshaws -i ~/keys/blogserver.pem 43.21.17.31
+    ```

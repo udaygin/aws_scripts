@@ -3,17 +3,20 @@ Random aws nodejs scripts I that wrote to make my life easy while tinkering with
 
 ## Installation
 - Prerequisite Steps
-  - Setup **nodejs** (please refer to installation instructions for your os flavor )
-  - Setup **aws javascript sdk** for nodejs [AWS Docs]( https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/installing-jssdk.html)
-  - **configure aws credentials** file with a EC2 readonly access account
+  - Setup **nodejs** *(latest version)*  (please refer to installation instructions for your os flavor )
+  - Setup **aws javascript sdk** for nodejs *(latest version)* [AWS Docs]( https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/installing-jssdk.html)
+  - **configure aws credentials** file with a account with access to EC2 & VPC
       - Note : here a limited access account is optional and a added security measure and out of scope for this. you can refer to aws docs on how to create it.
+      Here the aws [documentation](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html) on configuring aws credentials for sdk usage
 
-- Clone this project in to your home directory (Type below commands in a linux terminal)
+- Clone this project in to your home directory & build (Type below commands in a linux terminal)
 ```
 cd ~
 mkdir git
 cd git
 git clone https://github.com/udaygin/aws_scripts.git
+cd aws_scripts
+npm install
 ```
 *Note : for the rest of the document, I am going assume that you cloned this project into `~/git` directory as in above snippet. if not, not please adjust below commands to match the location of the project in your machine.*   
 - Update your `~/.bashrc` and reload it
@@ -66,7 +69,7 @@ it will simply update the configured aws security group to allow your public IP 
 - ##### Automatic invocation:
 Automatic invocation of this script every time when you run ssh command. this can come in handy if your ISP gives you a NAT ip and uses a pool of public facing IPs and you forget to manually run it every time this so called ip changes.
   - ###### Configuration:
-**Note : This is a bit of elobarate setup but worth the time w.r.t productivity gains in the longrun**
+    **__Note : This is a bit of elobarate setup but worth the time w.r.t productivity gains in the longrun__**
 
     open your ~/.ssh/ssh_config and setup a entry for your ssh server(s)
 

@@ -1,0 +1,29 @@
+{
+  "name": "aws_scripts",
+  "version": "1.0.0",
+  "description": "Random aws nodejs scripts I that wrote to make my life easy while tinkering with aws. ",
+  "main": "lsaws.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/udaygin/aws_scripts.git"
+  },
+  "keywords": [
+    "aws",
+    "tools",
+    "nodejs",
+    "node"
+  ],
+  "author": "Uday G",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/udaygin/aws_scripts/issues"
+  },
+  "homepage": "https://github.com/udaygin/aws_scripts#readme",
+  "dependencies": {
+    "chalk": "^2.3.0",
+    "fixed-width-string": "^1.0.0"
+  }
+}

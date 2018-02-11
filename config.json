@@ -1,0 +1,8 @@
+{
+  "aws_region" : "us-east-1",
+  "modsgip":{
+    "port" : 22 ,
+    "service_name" : "ssh",
+    "securityGroupId" : "sg-xxxxxxxx"
+  }
+}

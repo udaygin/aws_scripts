@@ -3,7 +3,8 @@ var AWS = require('aws-sdk');
 var fws = require('fixed-width-string');
 var chalk = require('chalk');
 var util = require('util');
-AWS.config.update({region: 'us-east-1'});
+var config = require("./config");
+AWS.config.update({region: config.aws_region});
 // uncomment below line if you are using a readonly profile for this command and update that profile name 
 // var credentials = new AWS.SharedIniFileCredentials({profile: 'ec2-readonly'});
 // AWS.config.credentials = credentials;

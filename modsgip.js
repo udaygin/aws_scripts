@@ -1,111 +1,130 @@
 /**
 Author : Uday G
 Git Id : udaygin
-Warning : this script is a work in progress. this works but has not been tested enough and also a bit ugly code.
 Description : You can use this to auto update your aws security group to allow ssh
               only from your public ip that is provided by your isp. this helps in
               reducing the number of IPs that can connect to your aws instance.
 */
 'use strict';
-
-var config = {
-  port : 22 ,
-  service : "ssh",
-  securityGroupId : "sg-000000"
-}
-
-// Load the AWS SDK for Node.js
 var AWS = require('aws-sdk');
-// Set the region
-AWS.config.update({region: 'us-east-1'});
+var chalk = require('chalk');
 var http = require('http');
+var rp = require('request-promise');
 // Create EC2 service object
+var config = require("./config");
+AWS.config.update({region: config.aws_region});
 var ec2 = new AWS.EC2({apiVersion: '2016-11-15'});
-var machineIp = "";
-var params = {
-  GroupIds: [config.securityGroupId]
-};
-var options = {
-  host: 'v4.ifconfig.co',
-  port: 80,
-  path: '/json',
-  method: 'GET'
-};
 
-function getIpPermission(ip){
+//util sync methods
+function getIpPermissionObjectFor(ip){
   return {
-      "FromPort": config.port,
+      "FromPort": config.modsgip.port,
       "IpProtocol": "tcp",
-      "IpRanges": [
-          {
+      "IpRanges": [{
               "CidrIp": ip+"/32",
-              "Description": "Allow "+config.service+" from "+ip
-          }
-      ],
-      "ToPort": config.port
+              "Description": "Allow "+config.modsgip.service_name+" from "+ip
+      }],
+      "ToPort": config.modsgip.port
   };
 }
 
-console.log("Fetching this machine (SSH client) IP");
-http.request(options, function(res) {
-  res.on('data', function (chunk) {
-    // console.log(chunk);
-    machineIp = JSON.parse(chunk.toString()).ip;
-    console.log('machineIp = ' + machineIp);
-    if(!machineIp)
-      return;
+function transformSgDataForRevokeAccess(params){
+  var result = JSON.parse(JSON.stringify(params));
+  delete result.OwnerId;
+  delete result.Description
+  delete result.IpPermissionsEgress
+  delete result.VpcId
+  delete result.Tags
+  delete result.IpPermissions[0].PrefixListIds
+  delete result.IpPermissions[0].UserIdGroupPairs
+  delete result.IpPermissions[0].Ipv6Ranges
+  return result;
+}
 
-    console.log( "Retrieve security group details")
-    ec2.describeSecurityGroups(params, function(err, data) {
-       if (err) { console.log("Error", err); } else {
-          let params = data.SecurityGroups[0];
+function transformSgDataForAuthorizeAccess(params,machineIp){
+  var result = JSON.parse(JSON.stringify(params));
+  delete result.OwnerId;
+  delete result.Description
+  delete result.IpPermissionsEgress
+  delete result.VpcId
+  delete result.Tags
+  result.IpPermissions[0] = getIpPermissionObjectFor(machineIp);
+  return result;
+}
 
-          console.log("Success. Retrieved : \n Name : " + params.GroupName
-          + "\n Description : "+ params.Description + "\n"
-          + ((params.IpPermissions.length > 0)? "CidrIp : "+params.IpPermissions[0].IpRanges[0].CidrIp : "" ));
+//async methods
+var getMachineIp = function() {
+  var options = {
+    uri: 'http://v4.ifconfig.co/json',
+    json: true // Automatically parses the JSON string in the response
+  };
+  return rp(options);
+}
 
-          delete params.OwnerId;
-          delete params.Description;
-          delete params.IpPermissionsEgress;
-          delete params.VpcId;
-          delete params.Tags;
-          console.log("Checking if there are existing rules...")
-          if (params.IpPermissions.length > 0) {
-              console.log("Yes! Checking to see if "+ machineIp+"/32 is already present in security group");
-              if(params.IpPermissions.length == 1
-                && params.IpPermissions[0].IpRanges.length == 1
-                 && params.IpPermissions[0].IpRanges[0].CidrIp == machineIp+"/32"){
-                   console.log("Yes it is! Not changing any thing. ")
-                 }else{
-              console.log(`Nope! Removing ${params.IpPermissions.length} ingress rules`);
-              delete params.IpPermissions[0].PrefixListIds;
-              delete params.IpPermissions[0].UserIdGroupPairs;
-              delete params.IpPermissions[0].Ipv6Ranges;
+var getSecurityGroups =  function() {
+  var params = {
+    GroupIds: [config.modsgip.securityGroupId]
+  };
+  return ec2.describeSecurityGroups(params).promise();
+}
 
-              ec2.revokeSecurityGroupIngress(params, (err) => {
-                if (err) {
-                  console.log("Error", err);
-                }else{
-                    console.log("Revoke done!!! appending a new one to allow "+machineIp+"/32");
-                    params.IpPermissions[0] = getIpPermission(machineIp);
-                    ec2.authorizeSecurityGroupIngress(params, (err, data) => {
-                      if (err) { console.log("Error", err); }else{
-                        console.log('authorize for ' + machineIp + ' done');
-                      }
-                    });
-                  }
-                }); // --------end revokeSecurityGroupIngress()
-              }
-        } else {
-          console.log('No ingress rules found. appending a new one to allow '+machineIp+"/32");
-          params.IpPermissions[0] = getIpPermission(machineIp);
-          ec2.authorizeSecurityGroupIngress(params, (err, data) => {
-            if (err) { console.log("Error", err); }else{
-              console.log('authorize for ' + machineIp + ' done');
-            }
-          });
-        }
-       }
+var removeExistingIpsInSg = function(securityGroup){
+  var params = transformSgDataForRevokeAccess(securityGroup);
+  return ec2.revokeSecurityGroupIngress(params).promise();
+}
+
+var authorizeIp = function(securityGroup,machineIp){
+  var params = transformSgDataForAuthorizeAccess(securityGroup,machineIp);
+  return ec2.authorizeSecurityGroupIngress(params).promise();
+}
+
+var modifySgForIpBasedOnExistingState = function(args){
+  if(args.ipInSgState === 'match_found'){
+    console.log(chalk.yellow('This machine\'s IP is already authorized in the security group.'))
+  }else if(args.ipInSgState === 'mismatch'){
+    return removeExistingIpsInSg(args.securityGroup)
+    .then(authorizeIp(args.securityGroup,args.machineIp))
+    .then(function(data){ console.log(chalk.yellow("Ip updated in to Security group! ")); })
+    .catch((error) => {
+        console.log(error,'Promise error');
+      });
+  }else if(args.ipInSgState === 'no_rules'){
+    return authorizeIp(args.securityGroup,args.machineIp)
+    .then(function(data){ console.log(chalk.yellow("Ip added to security group!")); })
+    .catch((error) => {
+        console.log(error,'Promise error');
+      });
+  }
+  return;
+}
+
+function searchForIpMatchInSgRules([getMachineIpRespnose, securityGroupData]){
+  var machineIp = getMachineIpRespnose.ip;
+  console.log("This machine\'s public IP : "+chalk.blue(machineIp));
+  var securityGroup = securityGroupData.SecurityGroups[0];
+  var ipInSgState = "";
+  if (securityGroup.IpPermissions.length > 0) {
+      if(securityGroup.IpPermissions.length == 1
+        && securityGroup.IpPermissions[0].IpRanges.length == 1
+         && securityGroup.IpPermissions[0].IpRanges[0].CidrIp == machineIp+"/32"){
+           ipInSgState= "match_found";
+         }else{
+            ipInSgState = "mismatch";
+         }
+    }else{
+           ipInSgState = "no_rules";
+    }
+  console.log("Check if "+chalk.blue(machineIp)+" allowed in security group("+config.modsgip.securityGroupId+") :: "+ ((ipInSgState === "match_found")? chalk.green(ipInSgState) : chalk.red(ipInSgState)));
+  return {"machineIp":machineIp,"ipInSgState":ipInSgState,"securityGroup":securityGroup};
+}
+// async methods -- done
+console.log("============================== "+chalk.cyan.bold("Start")+" ===================================")
+console.log("Fetching Security Group details from aws ...")
+Promise.all([getMachineIp(), getSecurityGroups()])
+  .then(searchForIpMatchInSgRules)
+  .then(modifySgForIpBasedOnExistingState)
+  .then(function(){ console.log("============================== "+chalk.cyan.bold("Done")+" ===================================")})
+  .catch((error) => {
+      console.log(error,'Promise error');
     });
-});
-}).end();
+//thats all folks!

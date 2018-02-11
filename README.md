@@ -29,7 +29,7 @@ source ~/.bashrc
 
 - Update aws region (replace your_region with your actual region in below command )
 ```
-sed -i 's/us-east-1/your_region/g' ~/git/aws_scripts/lsaws.js
+sed -i 's/us-east-1/your_region/g' ~/git/aws_scripts/config.json
 ```
 
 ## Commands & Usage
@@ -55,7 +55,7 @@ update aws security group IP to allow ssh only from your public ip. this script 
 - Create a security group "Allow Ssh From My Home Pc Only" with no rules and assigne it to your linux instance to which you want to connect using ssh. note down its security group id which is in the format sg-xxxxxx
 - Update the security group in the script to update(replace **your_sg** with your actual SecurityGroup in below command before running).
 ```
-sed -i 's/sg-000000/your_sg/g' ~/git/aws_scripts/modsgip.js
+sed -i 's/sg-xxxxxxxx/your_sg/g' ~/git/aws_scripts/config.json
 ```
 
 ##### Usage :

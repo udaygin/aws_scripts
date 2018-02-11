@@ -50,6 +50,7 @@ sample output
 
 ##### Description :
 update aws security group IP to allow ssh only from your public ip. this script is a work in progress. You can use this manually or in automated way to update your aws security group to allow ssh only from your public ip that is provided by your isp. this helps in reducing the number of IPs that can connect to your aws instance.
+**Warning : This command removes all the ip rules in a given security group in order to clean up your old IPs(as a security feature ). so please use a dedicated security group for this command.**
 
 ##### Prerequisite Steps :
 - Create a security group "Allow Ssh From My Home Pc Only" with no rules and assigne it to your linux instance to which you want to connect using ssh. note down its security group id which is in the format sg-xxxxxx
@@ -97,3 +98,10 @@ Automatic invocation of this script every time when you run ssh command. this ca
     ```
     sshaws -i ~/keys/blogserver.pem 43.21.17.31
     ```
+    and this is how it appears before your ssh prompt
+    - When your current IP is already approved in your Security Group
+    ![Match Found](img/match_found.png)
+    - When there is a old IP listed as approved in your Security Group
+    ![Mismatch](img/mismatch.png)
+    - When there are no IPs in your security groups
+    ![No Rules in SG](img/no_rules.png)

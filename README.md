@@ -99,9 +99,9 @@ Automatic invocation of this script every time when you run ssh command. this ca
     sshaws -i ~/keys/blogserver.pem 43.21.17.31
     ```
     and this is how it appears before your ssh prompt
-    - When your current IP is already approved in your Security Group
+    - **Match Found** : When your current IP is already approved in your Security Group
     ![Match Found](img/match_found.png)
-    - When there is a old IP listed as approved in your Security Group
+    - **Mismatch** When there is a old IP listed as approved in your Security Group
     ![Mismatch](img/mismatch.png)
-    - When there are no IPs in your security groups
+    - **No Existing Rules** When there are no IPs in your security groups
     ![No Rules in SG](img/no_rules.png)

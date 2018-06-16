@@ -23,10 +23,10 @@
   },
   "homepage": "https://github.com/udaygin/aws_scripts#readme",
   "dependencies": {
-    "aws-sdk": "^2.192.0",
-    "chalk": "^2.3.0",
+    "aws-sdk": "^2.259.1",
+    "chalk": "^2.4.1",
     "fixed-width-string": "^1.0.0",
-    "request": "^2.83.0",
+    "request": "^2.87.0",
     "request-promise": "^4.2.2"
   }
 }
